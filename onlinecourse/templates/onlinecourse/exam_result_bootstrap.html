@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exam Result - {{ course.name }}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+<!-- Navigation bar -->
+<nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Online Course</a>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            {% if user.is_authenticated %}
+            <li>
+                <a class="btn btn-link" href="#">{{ user.first_name }} ({{ user.username }})</a>
+                <a class="btn btn-link" href="#">Logout</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+    <!-- Result Header / Alert -->
+    {% if score >= 70 %}
+    <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">Congratulations, {{ user.first_name }}!</h4>
+        <p>You passed the exam with a score of <strong>{{ score }}%</strong> ({{ total_score }}/{{ total_grade }} points).</p>
+    </div>
+    {% else %}
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Failed</h4>
+        <p>Sorry, {{ user.first_name }}. You scored <strong>{{ score }}%</strong>. You need at least 70% to pass. Please try again.</p>
+    </div>
+    {% endif %}
+
+    <h2>Exam Results for {{ course.name }}</h2>
+
+    <!-- Questions breakdown -->
+    {% for lesson in course.lesson_set.all %}
+        {% for question in lesson.question_set.all %}
+        <div class="card mt-3">
+            <div class="card-header font-weight-bold">
+                Question {{ forloop.parentloop.counter }}.{{ forloop.counter }}: {{ question.question_text }}
+            </div>
+            <div class="card-body">
+                {% for choice in question.choice_set.all %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" disabled
+                        {% if choice.id in selected_ids %}checked{% endif %}>
+                    <label class="form-check-label 
+                        {% if choice.is_correct %}text-success font-weight-bold{% elif choice.id in selected_ids and not choice.is_correct %}text-danger{% endif %}">
+                        {{ choice.choice_text }}
+                        {% if choice.is_correct %}
+                            <span class="badge badge-success ml-2">Correct Answer</span>
+                        {% elif choice.id in selected_ids and not choice.is_correct %}
+                            <span class="badge badge-danger ml-2">Wrong Selection</span>
+                        {% endif %}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="mt-4 mb-5">
+        <a class="btn btn-primary" href="{% url 'onlinecourse:course_details' course.id %}">Re-take Exam</a>
+        <a class="btn btn-secondary ml-2" href="{% url 'onlinecourse:index' %}">Back to Courses</a>
+    </div>
+</div>
+</body>
+</html>
